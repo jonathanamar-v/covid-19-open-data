@@ -20,7 +20,7 @@ from functools import partial
 from pathlib import Path
 from typing import Callable, List, Tuple
 import pandas as pd
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 # Add our library utils to the path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -264,9 +264,8 @@ def create_covariate_datasets(
     cols_cov = COVARIATE_GROUPS[cov_name]
 
     # Download the data using only the necessary columns
-    print("Downloading data...")
+    print("Downloading data")
     data = get_data(COLS_IDX + COLS_EPI + cols_cov)
-    print("Data downloaded")
 
     # Preprocess the dataset by normalizing w.r.t population and creating training records
     data = preprocess_data(data, cov_name, cols_cov, split_train_predict=split_train_predict)
