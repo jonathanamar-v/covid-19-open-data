@@ -25,7 +25,6 @@ from tqdm import tqdm
 # Add our library utils to the path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from lib.concurrent import process_map
 from lib.constants import SRC
 from lib.io import read_file
 
@@ -41,7 +40,7 @@ COLS_EPI = ["new_confirmed", "new_deceased", "new_hospitalized"]
 
 COVARIATE_GROUPS = {
     "mobility": [col for col in FEATURES if col.startswith("mobility")],
-    # "emergency_declarations": [col for col in FEATURES if col.startswith("lawatlas")],
+    "emergency_declarations": [col for col in FEATURES if col.startswith("lawatlas")],
     "search_trends": [
         "search_trends_fever",
         "search_trends_cough",
@@ -282,18 +281,22 @@ def create_covariate_datasets(
 
 def main(output_path: Path, split_train_predict: Tuple[int, int]):
     wrap_func = create_covariate_datasets
+    map_opts = dict(total=len(COVARIATE_GROUPS), desc="Processing covariate groups")
     map_func = partial(wrap_func, output_path=output_path, split_train_predict=split_train_predict)
-    for _ in process_map(map_func, COVARIATE_GROUPS.keys(), desc="Processing covariate groups"):
+    for _ in tqdm(map(map_func, COVARIATE_GROUPS.keys()), **map_opts):
         pass
 
 
 if __name__ == "__main__":
-    output_root = SRC / ".." / "output" / "covariates"
-    output_root.mkdir(exist_ok=True, parents=True)
 
     argparser = ArgumentParser()
     argparser.add_argument("--train-window-size", type=int, default=14)
     argparser.add_argument("--predict-window-size", type=int, default=7)
     args = argparser.parse_args()
 
-    main(output_root, (args.train_window_size, args.predict_window_size))
+    split_train_predict = (args.train_window_size, args.predict_window_size)
+    folder_name = "_".join(map(str, split_train_predict))
+    output_root = SRC / ".." / "output" / "covariates" / f"{folder_name}"
+    output_root.mkdir(exist_ok=True, parents=True)
+
+    main(output_root, split_train_predict)
